@@ -26,7 +26,7 @@ app.use(passport.session());
 
 require('./routes/authRoutes')(app);
 require('./routes/blogRoutes')(app);
-
+console.log(process.env.NODE_ENV);
 if (['production'].includes(process.env.NODE_ENV)) {
   app.use(express.static('client/build'));
 
