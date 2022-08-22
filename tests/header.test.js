@@ -16,7 +16,12 @@ afterEach(async () => {
 });
 
 test("header logo has correct text", async() => {
-    const text = await page.$eval("a.brand-logo", el => el.innerHTML);
+      	const text = await page.$eval("a.brand-logo", el => el.innerHTML);
+	expect(text).toEqual("Blogster");
+}, 70000);
 
-    expect(text).toEqual("Blogster");
-}, 30000);
+test("clicking login starts oauth flow", async () => {
+  await page.click('.right a');
+  const url = await page.url();
+  expect(url).toMatch(/accounts\.google\.com/);
+}, 70000);
