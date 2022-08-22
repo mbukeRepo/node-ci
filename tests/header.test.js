@@ -15,7 +15,7 @@ afterEach(async () => {
    await browser.close();
 });
 
-test("Testing Header Component of my app", async() => {
+test("header logo has correct text", async() => {
     const text = await page.$eval("a.brand-logo", el => el.innerHTML);
 
     expect(text).toEqual("Blogster");
