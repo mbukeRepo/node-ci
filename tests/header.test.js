@@ -13,7 +13,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
-   //await browser.close();
+   await browser.close();
 });
 
 test("header logo has correct text", async() => {
@@ -27,7 +27,7 @@ test("clicking login starts oauth flow", async () => {
   expect(url).toMatch(/accounts\.google\.com/);
 }, 90000);
 
-test.only("when signed in show logout button", async () => {
+test("when signed in show logout button", async () => {
   // get userID and generate face session
   const user ="62ff77abc269b88fa053a2cd";
   const Buffer = require('safe-buffer').Buffer;
@@ -40,4 +40,8 @@ test.only("when signed in show logout button", async () => {
   await page.setCookie({name: 'session', value: sessionString});
   await page.setCookie({name: 'session.sig', value: sig});
   await page.goto('localhost:5000');
- }, 90000);
+  await page.waitFor('a[href="/auth/logout"]');
+
+  const text = await page.$eval('a[href="/auth/logout"]', el => el.innerHTML);
+  expect(text).toEqual("Logout");
+ }, 100000);
