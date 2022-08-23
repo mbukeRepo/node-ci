@@ -1,59 +1,52 @@
-const redis = require("redis");
-const mongoose = require("mongoose");
-const util = require("util");
+const mongoose = require('mongoose');
+const redis = require('redis');
+const util = require('util');
+const keys = require('../config/keys');
 
-
-const redisURL = "";
-const createClient = (url) => {
-  return redis.createClient(url)
-};
-
+const client = redis.createClient(keys.redisUrl);
+client.hget = util.promisify(client.hget);
 const exec = mongoose.Query.prototype.exec;
 
-mongoose.Query.prototype.cache = function(option={}) {
-  this.isCache = true;
-  this.hashKey = JSON.stringify(option.key || "");
+mongoose.Query.prototype.cache = function(options = {}) {
+  this.useCache = true;
+  this.hashKey = JSON.stringify(options.key || '');
 
   return this;
-}
+};
 
 mongoose.Query.prototype.exec = async function() {
-  try {
-    if (!this.isCache){
-      return exec.apply(this, arguments);
-    }
-    const client = createClient(redisURL);
-    client.hget = util.promisify(client.hget);
-
-    const key  = 
-        JSON.stringify(
-          Object.assign(
-            this.getQuery(), 
-            {collection: this.mongooseCollection.name}
-          )
-    );
-
-    const cachedValues = await client.hget(this.hashKey, key);
-    if(cachedValues){
-        const doc = JSON.parse(cachedValues);
-        return Array.isArray(doc) ? doc.map(doc => this.model(doc)) : this.model(doc);
-    }
-    const results = exec.apply(this, arguments);
-    client.hset(this.hashKey, key, JSON.stringify(results), "EX", 10);
-    return results;
-  } catch (error) {
-    throw error;
+  if (!this.useCache) {
+    return exec.apply(this, arguments);
   }
-}
+
+  const key = JSON.stringify(
+    Object.assign({}, this.getQuery(), {
+      collection: this.mongooseCollection.name
+    })
+  );
+
+  // See if we have a value for 'key' in redis
+  const cacheValue = await client.hget(this.hashKey, key);
+
+  // If we do, return that
+  if (cacheValue) {
+    const doc = JSON.parse(cacheValue);
+
+    return Array.isArray(doc)
+      ? doc.map(d => new this.model(d))
+      : new this.model(doc);
+  }
+
+  // Otherwise, issue the query and store the result in redis
+  const result = await exec.apply(this, arguments);
+
+  client.hset(this.hashKey, key, JSON.stringify(result), 'EX', 10);
+
+  return result;
+};
 
 module.exports = {
-  clearCache (hashKey) {
-    try {
-        const client = createClient(redisURL);
-        client.del(JSON.stringify(hashKey))
-    } catch (error) {
-      throw error
-    }
+  clearCache(hashKey) {
+    client.del(JSON.stringify(hashKey));
   }
-}
-
+};
