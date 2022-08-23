@@ -18,14 +18,16 @@ afterEach(async () => {
 
 test("header logo has correct text", async() => {
       	const text = await page.$eval("a.brand-logo", el => el.innerHTML);
+        await page.waitFor('a.brand-logo');
 	expect(text).toEqual("Blogster");
-}, 90000);
+});
 
 test("clicking login starts oauth flow", async () => {
+  await page.waitFor('.right a')
   await page.click('.right a');
   const url = await page.url();
   expect(url).toMatch(/accounts\.google\.com/);
-}, 90000);
+});
 
 test("when signed in show logout button", async () => {
   // get userID and generate face session
@@ -44,4 +46,4 @@ test("when signed in show logout button", async () => {
 
   const text = await page.$eval('a[href="/auth/logout"]', el => el.innerHTML);
   expect(text).toEqual("Logout");
- }, 100000);
+ });
