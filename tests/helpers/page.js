@@ -17,6 +17,7 @@ class CustomPage {
   constructor(page) {
     this.page = page;
   }
+
   async login() {
 	  const user = await userFactory();
 	  const {session, sig} = sessionFactory(user);
@@ -24,6 +25,10 @@ class CustomPage {
 	  await this.page.setCookie({name: 'session.sig', value: sig});
           await this.page.goto('localhost:5000');
   	  await this.page.waitFor('a[href="/auth/logout"]');
+  }
+
+  async getContent(selector){
+         return await this.page.$eval(selector, el => el.innerHTML);
   }
 }
 
