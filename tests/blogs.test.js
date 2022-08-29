@@ -12,7 +12,16 @@ afterEach(async () => {
 
 
 describe("when not logged in", async () => {
-  beforeEach(async () => {});
+  test("cannot create a blog", async () => {
+    const result = await page.evaluate(() => {
+       return fetch("http://localhost:5000/api/blogs", 
+	{  method: "POST", credentials: 'same-origin', 
+	   headers: {"Content-Type": "application/json"
+        }, body: JSON.stringify({title: "my", content: "my content"})})
+      .then(res => res.json())
+    });
+    expect(result).toEqual({error: "You must log in!"});
+  })
 });
 
 describe("when logged in", async () => {
@@ -57,6 +66,15 @@ describe("when logged in", async () => {
       const text = await page.getContent("form h5");
       expect(text).toEqual('Please confirm your entries');
     });
-    test("submitting then saving adds blog to index page", async () => {});
+    test("submitting then saving adds blog to index page", async () => {
+      await page.waitFor('button.green');
+      await page.click('button.green');
+      await page.waitFor('.card');
+      
+      const title = await page.getContent(".card-title");
+      const p = await page.getContent("p");
+      expect(title).toEqual("Hello world");
+      expect(p).toEqual("My content");
+    });
   });
 });
