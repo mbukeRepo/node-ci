@@ -13,15 +13,13 @@ afterEach(async () => {
 
 describe("when not logged in", async () => {
   test("cannot create a blog", async () => {
-    const result = await page.evaluate(() => {
-       return fetch("http://localhost:5000/api/blogs", 
-	{  method: "POST", credentials: 'same-origin', 
-	   headers: {"Content-Type": "application/json"
-        }, body: JSON.stringify({title: "my", content: "my content"})})
-      .then(res => res.json())
-    });
+    const result = await page.post("http://localhost:5000/api/blogs");
     expect(result).toEqual({error: "You must log in!"});
   })
+  test("cannot see list of blogs", async () => {
+    const result = await page.get("http://localhost:5000/api/blogs");
+    expect(result).toEqual({error: "You must log in!"});
+  });
 });
 
 describe("when logged in", async () => {
